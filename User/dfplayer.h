@@ -19,11 +19,11 @@ extern "C" {
 
 /* command controls */
 #define DFPLAYER_PLAY_NEXT            0x01 // Play next uploaded file
-#define DFPLAYER_PLAY_PREV            0x02 // Play prev uploaded file
+#define DFPLAYER_PLAY_PREVIOUS        0x02 // Play previous uploaded file
 #define DFPLAYER_PLAY_TRACK           0x03 // Play tracks in chronological order, by upload time
-#define DFPLAYER_SET_VOL_UP           0x04 // Increment volume by 1
-#define DFPLAYER_SET_VOL_DOWN         0x05 // Decrement volume by 1
-#define DFPLAYER_SET_VOL              0x06 // Set volume, range 0..30
+#define DFPLAYER_SET_VOLUME_UP        0x04 // Increment volume by 1
+#define DFPLAYER_SET_VOLUME_DOWN      0x05 // Decrement volume by 1
+#define DFPLAYER_SET_VOLUME           0x06 // Set volume, range 0..30
 #define DFPLAYER_SET_EQ               0x07 // 0=Off, 1=Pop, 2=Rock, 3=Jazz, 4=Classic, 5=Bass (may not be supported by some modules)
 #define DFPLAYER_LOOP_TRACK           0x08 // Playing & looping track number 0001..9999
 #define DFPLAYER_SET_PLAY_SRC         0x09 // 1=USB-Disk, 2=TF-Card, 3=Aux, 4=sleep(YX5200)/NOR-Flash(GD3200), 5=NOR-Flash, 6=Sleep (3..6 may not be supported by some modules)
@@ -74,15 +74,22 @@ extern "C" {
 
 /* List of supported modules */
 enum dfplayer_module {
-  DFPLAYER_MINI,				// DFPlayer Mini, MP3-TF-16P, FN-M16P (YX5200 chip, YX5300 chip or JL AAxxxx chip from Jieli)
-  DFPLAYER_FN_X10P,			// FN-M10P, FN-S10P (FN6100 chip)
-  DFPLAYER_HW_247A,			// DFPlayer Mini HW-247A (GD3200B chip)
-  DFPLAYER_NO_CHECKSUM  // no checksum calculation, not recomended for MCU without external crystal oscillator
+	DFPLAYER_MINI,				// DFPlayer Mini, MP3-TF-16P, FN-M16P (YX5200 chip, YX5300 chip or JL AAxxxx chip from Jieli)
+	DFPLAYER_FN_X10P,			// FN-M10P, FN-S10P (FN6100 chip)
+	DFPLAYER_HW_247A,			// DFPlayer Mini HW-247A (GD3200B chip)
+	DFPLAYER_NO_CHECKSUM  // no checksum calculation, not recomended for MCU without external crystal oscillator
 };
 
 
 /* Commands */
-void dfplayer_next();
+void dfplayer_playNext();
+void dfplayer_playPrevious();
+void dfplayer_playTrack(uint16_t track);
+void dfplayer_pause();
+void dfplayer_volumeUp();
+void dfplayer_volumeDown();
+void dfplayer_setVolume(uint8_t volume);
+
 
 #ifdef __cplusplus
 }

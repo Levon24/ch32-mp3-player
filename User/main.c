@@ -5,6 +5,8 @@
 
 
 /* Global Variable */
+extern uint8_t rxBuffer[DFPLAYER_UART_FRAME_SIZE];
+extern uint8_t rxPos;
 
 /*****************************************************************************
  * @brief Setup USART1
@@ -21,10 +23,10 @@ void initUSART1() {
 	GPIO_Init(GPIOD, &initUsartTx);
 
 	// USART1 RX --> D.6 */
-	GPIO_InitTypeDef initUartRx = {0};
-	initUartRx.GPIO_Pin = GPIO_Pin_6;
-	initUartRx.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOD, &initUartRx);
+	GPIO_InitTypeDef initUsartRx = {0};
+	initUsartRx.GPIO_Pin = GPIO_Pin_6;
+	initUsartRx.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOD, &initUsartRx);
 
 	USART_InitTypeDef initUsart = {0};
 	initUsart.USART_BaudRate = 9600;
@@ -35,7 +37,35 @@ void initUSART1() {
 	initUsart.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 	USART_Init(USART1, &initUsart);
 
+  NVIC_InitTypeDef initNvic = {0};
+	initNvic.NVIC_IRQChannel = USART1_IRQn;
+	initNvic.NVIC_IRQChannelPreemptionPriority = 0;
+	initNvic.NVIC_IRQChannelSubPriority = 1;
+	initNvic.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&initNvic);
+
+	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART1, ENABLE);
+}
+
+/*****************************************************************************
+ * @fn      USART1_IRQHandler
+ * @brief   This function handles USART1 global interrupt request.
+ *****************************************************************************/
+void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
+void USART1_IRQHandler(void) {
+	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
+		rxBuffer[rxPos] = USART_ReceiveData(USART1);
+		rxPos++;
+
+		if (rxPos == DFPLAYER_UART_DATA_LEN) {
+			printf("Response cmd: %02x, val: %04x\r\n", rxBuffer[3], ((uint16_t) rxBuffer[5] << 8) | rxBuffer[6]);
+
+			rxPos = 0;
+		}
+
+		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+	}
 }
 
 /*****************************************************************************
@@ -56,11 +86,19 @@ int main(void) {
 
 	initUSART1();
 
-	Delay_Ms(3000);
-	dfplayer_next();
+	Delay_Ms(2000);
+	
+	printf("Set volume\r\n");
+	dfplayer_setVolume(10);
 
-	Delay_Ms(500);
+	//Delay_Ms(500);
+	
+	printf("Play next\r\n");
+	dfplayer_playNext();
+
 
 	while (1) {
+		Delay_Ms(200);
+		printf("Ping\r\n");
 	}
 }
