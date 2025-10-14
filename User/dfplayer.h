@@ -24,13 +24,13 @@ extern "C" {
 #define DFPLAYER_SET_VOLUME_UP        0x04 // Increment volume by 1
 #define DFPLAYER_SET_VOLUME_DOWN      0x05 // Decrement volume by 1
 #define DFPLAYER_SET_VOLUME           0x06 // Set volume, range 0..30
-#define DFPLAYER_SET_EQ               0x07 // 0=Off, 1=Pop, 2=Rock, 3=Jazz, 4=Classic, 5=Bass (may not be supported by some modules)
-#define DFPLAYER_LOOP_TRACK           0x08 // Playing & looping track number 0001..9999
-#define DFPLAYER_SET_PLAY_SRC         0x09 // 1=USB-Disk, 2=TF-Card, 3=Aux, 4=sleep(YX5200)/NOR-Flash(GD3200), 5=NOR-Flash, 6=Sleep (3..6 may not be supported by some modules)
-#define DFPLAYER_SET_STANDBY_MODE     0x0A // Put player in standby mode, not the same as sleep mode
+#define DFPLAYER_SET_EQUALIZER        0x07 // 0=Off, 1=Pop, 2=Rock, 3=Jazz, 4=Classic, 5=Bass (may not be supported by some modules)
+#define DFPLAYER_REPEATE_TRACK        0x08 // Playing & looping track number 0001..9999
+#define DFPLAYER_SET_SOURCE    				0x09 // 1=USB-Disk, 2=TF-Card, 3=Aux, 4=sleep(YX5200)/NOR-Flash(GD3200), 5=NOR-Flash, 6=Sleep (3..6 may not be supported by some modules)
+#define DFPLAYER_SET_SLEEP_MODE       0x0A // Put player in standby mode, not the same as sleep mode
 #define DFPLAYER_SET_NORMAL_MODE      0x0B // Pull player out of standby mode (may not be supported by some modules)
 #define DFPLAYER_RESET                0x0C // Reset module, set all settings to factory default
-#define DFPLAYER_RESUME_PLAYBACK      0x0D // Resume playing current track
+#define DFPLAYER_PLAY                 0x0D // Resume playing current track
 #define DFPLAYER_PAUSE                0x0E // Pause playing current track
 #define DFPLAYER_PLAY_FOLDER          0x0F // Play track number 1..255 from folder number 1..99
 #define DFPLAYER_SET_DAC_GAIN         0x10 // Set DAC output gain/output voltage swing (may not be supported by some modules)
@@ -39,7 +39,7 @@ extern "C" {
 #define DFPLAYER_PLAY_ADVERT_FOLDER   0x13 // Interrupt current track & play track number 0001..9999 from "advert" folder, than resume current track
 #define DFPLAYER_PLAY_3000_FOLDER     0x14 // Play track number 0001..3000 from folder that supports 3000 tracks (may not be supported by some modules)
 #define DFPLAYER_STOP_ADVERT_FOLDER   0x15 // Stop interrupting current track while playing track from "advert" folder
-#define DFPLAYER_STOP_PLAYBACK        0x16 // Stop playing current track
+#define DFPLAYER_STOP                 0x16 // Stop playing current track
 #define DFPLAYER_REPEAT_FOLDER        0x17 // Repeat playback folder number 01..99
 #define DFPLAYER_RANDOM_ALL_FILES     0x18 // Play all tracks in random order
 #define DFPLAYER_LOOP_CURRENT_TRACK   0x19 // Loop currently played track
@@ -74,10 +74,10 @@ extern "C" {
 
 /* List of supported modules */
 enum dfplayer_module {
-	DFPLAYER_MINI,				// DFPlayer Mini, MP3-TF-16P, FN-M16P (YX5200 chip, YX5300 chip or JL AAxxxx chip from Jieli)
-	DFPLAYER_FN_X10P,			// FN-M10P, FN-S10P (FN6100 chip)
-	DFPLAYER_HW_247A,			// DFPlayer Mini HW-247A (GD3200B chip)
-	DFPLAYER_NO_CHECKSUM  // no checksum calculation, not recomended for MCU without external crystal oscillator
+  DFPLAYER_MINI,				// DFPlayer Mini, MP3-TF-16P, FN-M16P (YX5200 chip, YX5300 chip or JL AAxxxx chip from Jieli)
+  DFPLAYER_FN_X10P,			// FN-M10P, FN-S10P (FN6100 chip)
+  DFPLAYER_HW_247A,			// DFPlayer Mini HW-247A (GD3200B chip)
+  DFPLAYER_NO_CHECKSUM  // no checksum calculation, not recomended for MCU without external crystal oscillator
 };
 
 
@@ -85,11 +85,25 @@ enum dfplayer_module {
 void dfplayer_playNext();
 void dfplayer_playPrevious();
 void dfplayer_playTrack(uint16_t track);
-void dfplayer_pause();
 void dfplayer_volumeUp();
 void dfplayer_volumeDown();
 void dfplayer_setVolume(uint8_t volume);
-
+void dfplayer_setEqualizer(uint8_t preset);
+void dfplayer_repeatTrack(uint16_t track);
+void dfplayer_setSource(uint8_t source);
+void dfplayer_setSleepMode();
+void dfplayer_setNormalMode();
+void dfplayer_reset();
+void dfplayer_play();
+void dfplayer_pause();
+void dfplayer_playFolder(uint8_t folder, uint8_t track);
+void dfplayer_setDacGain(uint8_t enable, uint8_t gain);
+void dfplayer_repeatAll(uint8_t enable);
+void dfplayer_playMp3Folder(uint16_t track);
+void dfplayer_playAdvertFolder(uint16_t track);
+void dfplayer_play3000Folder(uint16_t track);
+void dfplayer_stopAdvertFolder();
+void dfplayer_stop();
 
 #ifdef __cplusplus
 }

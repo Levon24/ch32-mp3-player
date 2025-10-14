@@ -40,7 +40,7 @@ void initUSART1() {
   NVIC_InitTypeDef initNvic = {0};
 	initNvic.NVIC_IRQChannel = USART1_IRQn;
 	initNvic.NVIC_IRQChannelPreemptionPriority = 0;
-	initNvic.NVIC_IRQChannelSubPriority = 1;
+	initNvic.NVIC_IRQChannelSubPriority = 0;
 	initNvic.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&initNvic);
 
@@ -63,8 +63,6 @@ void USART1_IRQHandler(void) {
 
 			rxPos = 0;
 		}
-
-		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
 }
 
@@ -86,19 +84,17 @@ int main(void) {
 
 	initUSART1();
 
-	Delay_Ms(2000);
+	Delay_Ms(3000);
 	
 	printf("Set volume\r\n");
 	dfplayer_setVolume(10);
 
-	//Delay_Ms(500);
-	
-	printf("Play next\r\n");
-	dfplayer_playNext();
-
+	Delay_Ms(350);
+	dfplayer_repeatAll(1);
 
 	while (1) {
-		Delay_Ms(200);
-		printf("Ping\r\n");
+		Delay_Ms(15000);
+		printf("Play next\r\n");
+		dfplayer_playNext();
 	}
 }
