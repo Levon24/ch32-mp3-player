@@ -104,6 +104,10 @@ void dfplayer_playAdvertFolder(uint16_t track);
 void dfplayer_play3000Folder(uint16_t track);
 void dfplayer_stopAdvertFolder();
 void dfplayer_stop();
+void dfplayer_repeatFolder(uint8_t folder);
+void dfplayer_randomAll();
+void dfplayer_repeatCurrentTrack(uint8_t repeat);
+void dfplayer_enableDac(uint8_t enable);
 
 #ifdef __cplusplus
 }

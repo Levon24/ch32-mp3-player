@@ -328,7 +328,7 @@ void dfplayer_playAdvertFolder(uint16_t track) {
 }
 
 /*****************************************************************************
- * @brief  Play specific track number from folder, if you need more than 256 tracks in a folder
+ * @brief Play specific track number from folder, if you need more than 256 tracks in a folder
  * NOTE:
  *  - folder name must be 01..15
  *  - up to 0001..3000 songs in each folder
@@ -358,3 +358,46 @@ void dfplayer_stopAdvertFolder() {
 void dfplayer_stop() {
   dfplayer_send(DFPLAYER_STOP, 0, 0);
 }
+
+/*****************************************************************************
+ * @brief Specify repeat playback of a folder
+ * NOTE:
+ *  - up to 01..99 folder
+ *  - command does't work when module is paused or stopped
+ *  - any playback command will switch back to normal playback mode
+ *  - folder must start with 2 decimal digits with leading zeros
+ *****************************************************************************/
+void dfplayer_repeatFolder(uint8_t folder) {
+  dfplayer_send(DFPLAYER_REPEAT_FOLDER, 0, folder);
+}
+
+/*****************************************************************************
+ * @brief Play all tracks in random order
+ * NOTE:
+ *  - any playback command will switch back to normal playback mode ??
+ *****************************************************************************/
+void dfplayer_randomAll() {
+  dfplayer_send(DFPLAYER_RANDOM_ALL_FILES, 0, 0);
+}
+
+/*****************************************************************************
+ * @brief Loop currently played track
+ * NOTE:
+ *  - 0=stop repeating, 1=repeat currently played file
+ *  - command does't work when module is paused or stopped
+ *  - any playback command will switch back to normal playback mode
+ *****************************************************************************/
+void dfplayer_repeatCurrentTrack(uint8_t repeat) {
+  dfplayer_send(DFPLAYER_LOOP_CURRENT_TRACK, 0, repeat);
+}
+
+/*****************************************************************************
+ * @brief Enable/disable DAC, aka mute/unmute
+ * NOTE:
+ *  - 1=enable, 0=disable/high resistance
+ *  - DAC is turned on by default after boot or reset
+ *****************************************************************************/
+void dfplayer_enableDac(uint8_t enable) {
+  dfplayer_send(DFPLAYER_SET_DAC, 0, enable);
+}
+
