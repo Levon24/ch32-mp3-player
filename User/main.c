@@ -7,11 +7,11 @@
 /* Global Variable */
 extern uint8_t rxBuffer[DFPLAYER_UART_FRAME_SIZE];
 extern uint8_t rxPos;
+extern uint8_t dfpReady;
 
-/*****************************************************************************
+/**
  * @brief Setup USART1
- *
- *****************************************************************************/
+ */
 void initUSART1() {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
 
@@ -48,28 +48,30 @@ void initUSART1() {
 	USART_Cmd(USART1, ENABLE);
 }
 
-/*****************************************************************************
+/**
  * @fn      USART1_IRQHandler
  * @brief   This function handles USART1 global interrupt request.
- *****************************************************************************/
+ */
 void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void USART1_IRQHandler(void) {
 	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
 		rxBuffer[rxPos] = USART_ReceiveData(USART1);
+		if (rxPos == 0 && rxBuffer[rxPos] != DFPLAYER_UART_START_BYTE) {
+			return;
+		}
 		rxPos++;
 
-		if (rxPos == DFPLAYER_UART_DATA_LEN) {
-			printf("Response cmd: %02x, val: %04x\r\n", rxBuffer[3], ((uint16_t) rxBuffer[5] << 8) | rxBuffer[6]);
-
+		if (rxPos == DFPLAYER_UART_FRAME_SIZE) {
+			dfplayer_return();
 			rxPos = 0;
 		}
 	}
 }
 
-/*****************************************************************************
+/**
  * @brief Main function
  *
- *****************************************************************************/
+ */
 int main(void) {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
 	SystemCoreClockUpdate();
@@ -84,17 +86,24 @@ int main(void) {
 
 	initUSART1();
 
-	Delay_Ms(3000);
+	dfplayer_reset();
+	//Delay_Ms(DFPLAYER_BOOT_DELAY);
+	while (dfpReady == 0) {
+		Delay_Ms(100);
+	}
 	
 	printf("Set volume\r\n");
-	dfplayer_setVolume(10);
+	dfplayer_setVolume(12);
+	Delay_Ms(DFPLAYER_CMD_DELAY);
 
-	Delay_Ms(350);
-	dfplayer_repeatAll(1);
+	dfplayer_repeatFolder(2);
+	
+	//dfplayer_repeatAll(1);
 
 	while (1) {
-		Delay_Ms(15000);
-		printf("Play next\r\n");
-		dfplayer_playNext();
+		printf("Ping\r\n");
+		//dfplayer_playNext();
+
+		Delay_Ms(30000);
 	}
 }

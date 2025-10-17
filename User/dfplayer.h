@@ -47,6 +47,10 @@ extern "C" {
 #define DFPLAYER_PLAY_ADVERT_FOLDER_N 0x25 // Interrupt current track & play track number 001..255 from "advert1".."advert9" folder, than resume current track (may not be supported by some modules)
 
 /* request command controls */
+#define DFPLAYER_RETURN_CODE_DONE     0x3D // Track playback is is completed, module return this status automatically after the track has been played
+#define DFPLAYER_RETURN_CODE_READY    0x3F // Ready after boot or reset, module return this status automatically after boot or reset
+#define DFPLAYER_RETURN_ERROR         0x40 // Error, module return this status automatically if command is not accepted (details located in 7-th RX byte)
+#define DFPLAYER_RETURN_CODE_OK_ACK   0x41 // OK, command is accepted (returned only if ACK/feedback byte is set to 0x01)
 #define DFPLAYER_GET_STATUS           0x42 // Get current stutus, see NOTE
 #define DFPLAYER_GET_VOL              0x43 // Get current volume, range 0..30
 #define DFPLAYER_GET_EQ               0x44 // Get current EQ, 0=Off, 1=Pop, 2=Rock, 3=Jazz, 4=Classic, 5=Bass (may not be supported by some modules)
@@ -61,16 +65,9 @@ extern "C" {
 #define DFPLAYER_GET_QNT_FOLDER_FILES 0x4E // Get total number of tracks in folder
 #define DFPLAYER_GET_QNT_FOLDERS      0x4F // Get total number of folders in current source (may not be supported by some modules)
 
-/* module returned codes at the end of any playback operation or if any command error, located in 4-th RX byte */
-#define DFPLAYER_RETURN_CODE_OK_ACK   0x41 // OK, command is accepted (returned only if ACK/feedback byte is set to 0x01)
-#define DFPLAYER_RETURN_ERROR         0x40 // Error, module return this status automatically if command is not accepted (details located in 7-th RX byte)
-#define DFPLAYER_RETURN_CODE_DONE     0x3D // Track playback is is completed, module return this status automatically after the track has been played
-#define DFPLAYER_RETURN_CODE_READY    0x3F // Ready after boot or reset, module return this status automatically after boot or reset
-
 /* misc */
 #define DFPLAYER_BOOT_DELAY           3000 // Average player boot time 1500sec..3000msec, depends on SD-card size
 #define DFPLAYER_CMD_DELAY            350  // Average read command timeout 200msec..300msec for YX5200/AAxxxx chip & 350msec..500msec for GD3200B/MH2024K chip
-
 
 /* List of supported modules */
 enum dfplayer_module {
@@ -79,7 +76,6 @@ enum dfplayer_module {
   DFPLAYER_HW_247A,			// DFPlayer Mini HW-247A (GD3200B chip)
   DFPLAYER_NO_CHECKSUM  // no checksum calculation, not recomended for MCU without external crystal oscillator
 };
-
 
 /* Commands */
 void dfplayer_playNext();
@@ -108,6 +104,7 @@ void dfplayer_repeatFolder(uint8_t folder);
 void dfplayer_randomAll();
 void dfplayer_repeatCurrentTrack(uint8_t repeat);
 void dfplayer_enableDac(uint8_t enable);
+void dfplayer_return();
 
 #ifdef __cplusplus
 }
