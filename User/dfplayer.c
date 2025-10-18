@@ -14,6 +14,7 @@ uint8_t dfpReady = 0;
 uint8_t dfpDone = 0;
 uint8_t dfpOk = 0;
 uint8_t dfpSource = 0;
+uint16_t dfpError = 0;
 
 /**
  * @brief Write buffer to USART1
@@ -422,6 +423,7 @@ void dfplayer_return() {
       break;
 
     case DFPLAYER_RETURN_ERROR:
+      dfpError = value;
       printf("Error: %04x\r\n", value);
       break;
     
