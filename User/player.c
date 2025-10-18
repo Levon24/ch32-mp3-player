@@ -2,24 +2,25 @@
 #include <ch32v00x.h>
 #include <string.h>
 #include "debug.h"
-#include "dfplayer.h"
+#include "player.h"
 
-const enum dfplayer_module module = DFPLAYER_MINI; 
-const uint8_t ack = 0x01; // 0x01 = module return feedback after the command, 0x00 = module not return feedback after the command
+const enum player_module pModule = PLAYER_MINI; 
+const uint8_t pAck = 0x01; // 0x01 = module return feedback after the command, 0x00 = module not return feedback after the command
+//enum player_callback pCallback = PLAYER_CALLBACK_UNDIFINED;
 
-uint8_t txBuffer[DFPLAYER_UART_FRAME_SIZE];
-uint8_t rxBuffer[DFPLAYER_UART_FRAME_SIZE];
+uint8_t txBuffer[PLAYER_UART_FRAME_SIZE];
+uint8_t rxBuffer[PLAYER_UART_FRAME_SIZE];
 uint8_t rxPos = 0;
-uint8_t dfpReady = 0;
-uint8_t dfpDone = 0;
-uint8_t dfpOk = 0;
-uint8_t dfpSource = 0;
-uint16_t dfpError = 0;
+uint8_t pReady = 0;
+uint8_t pDone = 0;
+uint8_t pOk = 0;
+uint8_t pSource = 0;
+uint16_t pError = 0;
 
 /**
  * @brief Write buffer to USART1
  */
-void dfplayer_write(uint8_t size) {
+void player_write(uint8_t size) {
   for (uint8_t p = 0; p < size; p++) {
     USART_SendData(USART1, txBuffer[p]);
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {
@@ -37,53 +38,53 @@ void dfplayer_write(uint8_t size) {
  *     START, VER, LEN, CMD, ACK, DH, DL, SUMH, SUML, END
  *            -------- checksum --------
  */
-void dfplayer_send(uint8_t cmd, uint8_t dh, uint8_t dl) {
-  txBuffer[0] = DFPLAYER_UART_START_BYTE;
-  txBuffer[1] = DFPLAYER_UART_VERSION;
-  txBuffer[2] = DFPLAYER_UART_DATA_LEN;
+void player_send(uint8_t cmd, uint8_t dh, uint8_t dl) {
+  txBuffer[0] = PLAYER_UART_START_BYTE;
+  txBuffer[1] = PLAYER_UART_VERSION;
+  txBuffer[2] = PLAYER_UART_DATA_LEN;
   txBuffer[3] = cmd;
-  txBuffer[4] = ack;
+  txBuffer[4] = pAck;
   txBuffer[5] = dh;
   txBuffer[6] = dl;
 
   int16_t checksum;
-  switch (module) {
-    case DFPLAYER_MINI:
-    case DFPLAYER_HW_247A:
+  switch (pModule) {
+    case PLAYER_MINI:
+    case PLAYER_HW_247A:
       checksum = 0x0000; // 0x0000, DON'T TOUCH!!!
       checksum = checksum - txBuffer[1] - txBuffer[2] - txBuffer[3] - txBuffer[4] - txBuffer[5] - txBuffer[6];
       break;
 
-    case DFPLAYER_FN_X10P:
+    case PLAYER_FN_X10P:
       checksum = 0xFFFF; // 0xFFFF, DON'T TOUCH!!!
       checksum = checksum - txBuffer[1] - txBuffer[2] - txBuffer[3] - txBuffer[4] - txBuffer[5] - txBuffer[6] + 1;
       break;
 
-    case DFPLAYER_NO_CHECKSUM:
+    case PLAYER_NO_CHECKSUM:
     default:
       //empty - no checksum calculation, not recomended for MCU without external crystal oscillator
       break;
   }
 
-  switch (module) {
-    case DFPLAYER_MINI:
-    case DFPLAYER_FN_X10P:
-    case DFPLAYER_HW_247A:
+  switch (pModule) {
+    case PLAYER_MINI:
+    case PLAYER_FN_X10P:
+    case PLAYER_HW_247A:
       txBuffer[7] = checksum >> 8;
       txBuffer[8] = checksum;
-      txBuffer[9] = DFPLAYER_UART_END_BYTE;
-      dfplayer_write(DFPLAYER_UART_FRAME_SIZE);
+      txBuffer[9] = PLAYER_UART_END_BYTE;
+      player_write(PLAYER_UART_FRAME_SIZE);
 
       // GD3200B/MH2024K chip so slow & need delay after write command
-      if (module == DFPLAYER_HW_247A) {	
-        Delay_Ms(DFPLAYER_CMD_DELAY);
+      if (pModule == PLAYER_HW_247A) {	
+        Delay_Ms(PLAYER_CMD_DELAY);
       }
       break;
 
-    case DFPLAYER_NO_CHECKSUM:
+    case PLAYER_NO_CHECKSUM:
     default:
-      txBuffer[7] = DFPLAYER_UART_END_BYTE;
-      dfplayer_write(DFPLAYER_UART_FRAME_SIZE - 2); // -2 =SUMH & SUML not used
+      txBuffer[7] = PLAYER_UART_END_BYTE;
+      player_write(PLAYER_UART_FRAME_SIZE - 2); // -2 =SUMH & SUML not used
       break;
   }
 }
@@ -97,8 +98,8 @@ void dfplayer_send(uint8_t cmd, uint8_t dh, uint8_t dl) {
  *     0      1    2    3    4    5   6   7     8     9-byte
  *     START, VER, LEN, CMD, ACK, DH, DL, SUMH, SUML, END
  */
-void dfplayer_read(uint8_t size) {
-  memset(rxBuffer, 0, DFPLAYER_UART_FRAME_SIZE);
+void player_read(uint8_t size) {
+  memset(rxBuffer, 0, PLAYER_UART_FRAME_SIZE);
   
   for (uint8_t p = 0; p < size; p++) {
     while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET) {
@@ -111,8 +112,8 @@ void dfplayer_read(uint8_t size) {
 /**
  * @brief Get response from player
  */
-uint16_t dfplayer_response(uint8_t cmd) {
-  dfplayer_read(DFPLAYER_UART_FRAME_SIZE);
+uint16_t player_response(uint8_t cmd) {
+  player_read(PLAYER_UART_FRAME_SIZE);
   
   if (rxBuffer[3] == cmd) {
     // return DH, DL
@@ -129,8 +130,8 @@ uint16_t dfplayer_response(uint8_t cmd) {
  *  - example: SD_ROOT/0001 - My favorite song.mp3
  *  - don’t copy 0003.mp3 & then 0001.mp3, because 0003.mp3 will be played first
  */
-void dfplayer_playNext() {
-  dfplayer_send(DFPLAYER_PLAY_NEXT, 0, 0);
+void player_playNext() {
+  player_send(PLAYER_PLAY_NEXT, 0, 0);
 }
 
 /**
@@ -140,8 +141,8 @@ void dfplayer_playNext() {
  *  - example: SD_ROOT/0001 - My favorite song.mp3
  *  - don’t copy 0003.mp3 & then 0001.mp3, because 0003.mp3 will be played first
  */
-void dfplayer_playPrevious() {
-  dfplayer_send(DFPLAYER_PLAY_PREVIOUS, 0, 0);
+void player_playPrevious() {
+  player_send(PLAYER_PLAY_PREVIOUS, 0, 0);
 }
 
 /**
@@ -151,38 +152,38 @@ void dfplayer_playPrevious() {
  *  - example: SD_ROOT/0001 - My favorite song.mp3
  *  - don’t copy 0003.mp3 & then 0001.mp3, because 0003.mp3 will be played first
  */
-void dfplayer_playTrack(uint16_t track) {
-  dfplayer_send(DFPLAYER_PLAY_TRACK, (track >> 8), track);
+void player_playTrack(uint16_t track) {
+  player_send(PLAYER_PLAY_TRACK, (track >> 8), track);
 }
 
 /**
  * @brief Increase volume
  */
-void dfplayer_volumeUp() {
-  dfplayer_send(DFPLAYER_SET_VOLUME_UP, 0, 0);
+void player_volumeUp() {
+  player_send(PLAYER_SET_VOLUME_UP, 0, 0);
 }
 
 /**
  * @brief Decrease volume
  */
-void dfplayer_volumeDown() {
-  dfplayer_send(DFPLAYER_SET_VOLUME_DOWN, 0, 0);
+void player_volumeDown() {
+  player_send(PLAYER_SET_VOLUME_DOWN, 0, 0);
 }
 
 /**
  * @brief Specify volume
  * NOTE: Volume level: 0-30
  */
-void dfplayer_setVolume(uint8_t volume) {
-  dfplayer_send(DFPLAYER_SET_VOLUME, 0, volume);
+void player_setVolume(uint8_t volume) {
+  player_send(PLAYER_SET_VOLUME, 0, volume);
 }
 
 /**
  * @brief Specify equalizer (0/1/2/3/4/5)
  * NOTE: 0:Normal/1:Pop/2:Rock/3:Jazz/4:Classic/5:Bass
  */
-void dfplayer_setEqualizer(uint8_t preset) {
-  dfplayer_send(DFPLAYER_SET_EQUALIZER, 0, preset);
+void player_setEqualizer(uint8_t preset) {
+  player_send(PLAYER_SET_EQUALIZER, 0, preset);
 }
 
 /**
@@ -191,8 +192,8 @@ void dfplayer_setEqualizer(uint8_t preset) {
  *	- command does't work when module is paused or stopped
  *	- don’t copy 0003.mp3 & then 0001.mp3, because 0003.mp3 will be played first
  */
-void dfplayer_repeatTrack(uint16_t track) {
-  dfplayer_send(DFPLAYER_REPEATE_TRACK, (track >> 8), track);
+void player_repeatTrack(uint16_t track) {
+  player_send(PLAYER_REPEATE_TRACK, (track >> 8), track);
 }
 
 /**
@@ -212,8 +213,8 @@ void dfplayer_repeatTrack(uint16_t track) {
  *	- this command interrupt playback!!!
  *	- wait 200ms to select source
  */
-void dfplayer_setSource(uint8_t source) {
-  dfplayer_send(DFPLAYER_SET_SOURCE, 0, source);
+void player_setSource(uint8_t source) {
+  player_send(PLAYER_SET_SOURCE, 0, source);
 }
 
 /**
@@ -224,8 +225,8 @@ void dfplayer_setSource(uint8_t source) {
  *  - module does't respond to any playback commands in standby mode, other commands OK
  *  - looks like does nothing, consumption before & after command 24mA
  */
-void dfplayer_setSleepMode() {
-  dfplayer_send(DFPLAYER_SET_SLEEP_MODE, 0, 0);
+void player_setSleepMode() {
+  player_send(PLAYER_SET_SLEEP_MODE, 0, 0);
 }
 
 /**
@@ -236,8 +237,8 @@ void dfplayer_setSleepMode() {
  *  - module does't respond to any playback commands in standby mode, other commands OK
  *  - looks like does nothing, consumption before & after command 24mA
  */
-void dfplayer_setNormalMode() {
-  dfplayer_send(DFPLAYER_SET_NORMAL_MODE, 0, 0);
+void player_setNormalMode() {
+  player_send(PLAYER_SET_NORMAL_MODE, 0, 0);
 }
 
 /**
@@ -245,22 +246,22 @@ void dfplayer_setNormalMode() {
  * NOTE:
  *  - wait for player to boot, 1.5sec..3sec depends on SD-card size
  */
-void dfplayer_reset() {
-  dfplayer_send(DFPLAYER_RESET, 0, 0);
+void player_reset() {
+  player_send(PLAYER_RESET, 0, 0);
 }
 
 /**
  * @brief Resume playing current track, after pause or stop
  */
-void dfplayer_play() {
-  dfplayer_send(DFPLAYER_PLAY, 0, 0);
+void player_play() {
+  player_send(PLAYER_PLAY, 0, 0);
 }
 
 /**
  * @brief Pause current track
  */
-void dfplayer_pause() {
-  dfplayer_send(DFPLAYER_PAUSE, 0, 0);
+void player_pause() {
+  player_send(PLAYER_PAUSE, 0, 0);
 }
 
 /**
@@ -269,8 +270,8 @@ void dfplayer_pause() {
  *  - folder name must be 01..99
  *  - up to 001..255 songs in each folder
  */
-void dfplayer_playFolder(uint8_t folder, uint8_t track) {
-  dfplayer_send(DFPLAYER_PLAY_FOLDER, folder, track);
+void player_playFolder(uint8_t folder, uint8_t track) {
+  player_send(PLAYER_PLAY_FOLDER, folder, track);
 }
 
 /**
@@ -281,8 +282,8 @@ void dfplayer_playFolder(uint8_t folder, uint8_t track) {
  *
  *  - feature may not be supported by some modules!!!
  */
-void dfplayer_setDacGain(uint8_t enable, uint8_t gain) {
-  dfplayer_send(DFPLAYER_SET_DAC_GAIN, enable, gain);
+void player_setDacGain(uint8_t enable, uint8_t gain) {
+  player_send(PLAYER_SET_DAC_GAIN, enable, gain);
 }
 
 /**
@@ -296,8 +297,8 @@ void dfplayer_setDacGain(uint8_t enable, uint8_t gain) {
  *   - example: SD_ROOT/0001 - My favorite song.mp3
  *  - don’t copy 0003.mp3 & then 0001.mp3, because 0003.mp3 will be played first
  */
-void dfplayer_repeatAll(uint8_t enable) {
-  dfplayer_send(DFPLAYER_REPEAT_ALL, 0, enable);
+void player_repeatAll(uint8_t enable) {
+  player_send(PLAYER_REPEAT_ALL, 0, enable);
 }
 
 /**
@@ -310,8 +311,8 @@ void dfplayer_repeatAll(uint8_t enable) {
  *   - example: SD_ROOT/mp3/0001 - My favorite song.mp3
  *  - module speed will decrease as the folder gets bigger, place no more than 3000 tracks to keep the speed
  */
-void dfplayer_playMp3Folder(uint16_t track) {
-  dfplayer_send(DFPLAYER_PLAY_MP3_FOLDER, (track >> 8), track);
+void player_playMp3Folder(uint16_t track) {
+  player_send(PLAYER_PLAY_MP3_FOLDER, (track >> 8), track);
 }
 
 /**
@@ -324,8 +325,8 @@ void dfplayer_playMp3Folder(uint16_t track) {
  *  - files in folder must start with 4 decimal digits with leading zeros
  *   - example: SD_ROOT/advert/0001 - My favorite song.mp3
  */
-void dfplayer_playAdvertFolder(uint16_t track) {
-  dfplayer_send(DFPLAYER_PLAY_ADVERT_FOLDER, (track >> 8), track);
+void player_playAdvertFolder(uint16_t track) {
+  player_send(PLAYER_PLAY_ADVERT_FOLDER, (track >> 8), track);
 }
 
 /**
@@ -338,8 +339,8 @@ void dfplayer_playAdvertFolder(uint16_t track) {
  *  - files in folder must start with 4 decimal digits with leading zeros
  *   - example: SD_ROOT/01/0001 - My favorite song.mp3
  */
-void dfplayer_play3000Folder(uint16_t track) {
-  dfplayer_send(DFPLAYER_PLAY_3000_FOLDER, (track >> 8), track);
+void player_play3000Folder(uint16_t track) {
+  player_send(PLAYER_PLAY_3000_FOLDER, (track >> 8), track);
 }
 
 /**
@@ -347,8 +348,8 @@ void dfplayer_play3000Folder(uint16_t track) {
  * NOTE:
  *  - see playAdvertFolder() for details
  */
-void dfplayer_stopAdvertFolder() {
-  dfplayer_send(DFPLAYER_STOP_ADVERT_FOLDER, 0, 0);
+void player_stopAdvertFolder() {
+  player_send(PLAYER_STOP_ADVERT_FOLDER, 0, 0);
 }
 
 /**
@@ -356,8 +357,8 @@ void dfplayer_stopAdvertFolder() {
  * NOTE:
  *  - always call stop() after pause(), otherwise a new track from another folder won't play
  */
-void dfplayer_stop() {
-  dfplayer_send(DFPLAYER_STOP, 0, 0);
+void player_stop() {
+  player_send(PLAYER_STOP, 0, 0);
 }
 
 /**
@@ -368,8 +369,8 @@ void dfplayer_stop() {
  *  - any playback command will switch back to normal playback mode
  *  - folder must start with 2 decimal digits with leading zeros
  */
-void dfplayer_repeatFolder(uint8_t folder) {
-  dfplayer_send(DFPLAYER_REPEAT_FOLDER, 0, folder);
+void player_repeatFolder(uint8_t folder) {
+  player_send(PLAYER_REPEAT_FOLDER, 0, folder);
 }
 
 /**
@@ -377,8 +378,8 @@ void dfplayer_repeatFolder(uint8_t folder) {
  * NOTE:
  *  - any playback command will switch back to normal playback mode ??
  */
-void dfplayer_randomAll() {
-  dfplayer_send(DFPLAYER_RANDOM_ALL_FILES, 0, 0);
+void player_randomAll() {
+  player_send(PLAYER_RANDOM_ALL_FILES, 0, 0);
 }
 
 /**
@@ -388,8 +389,8 @@ void dfplayer_randomAll() {
  *  - command does't work when module is paused or stopped
  *  - any playback command will switch back to normal playback mode
  */
-void dfplayer_repeatCurrentTrack(uint8_t repeat) {
-  dfplayer_send(DFPLAYER_LOOP_CURRENT_TRACK, 0, repeat);
+void player_repeatCurrentTrack(uint8_t repeat) {
+  player_send(PLAYER_LOOP_CURRENT_TRACK, 0, repeat);
 }
 
 /**
@@ -398,37 +399,37 @@ void dfplayer_repeatCurrentTrack(uint8_t repeat) {
  *  - 1=enable, 0=disable/high resistance
  *  - DAC is turned on by default after boot or reset
  */
-void dfplayer_enableDac(uint8_t enable) {
-  dfplayer_send(DFPLAYER_SET_DAC, 0, enable);
+void player_enableDac(uint8_t enable) {
+  player_send(PLAYER_SET_DAC, 0, enable);
 }
 
 /**
  * @brief Process return code
  */
-void dfplayer_return() {
+void player_return() {
   uint8_t cmd = rxBuffer[3];
   uint16_t value = ((uint16_t) rxBuffer[5] << 8) | rxBuffer[6];
   printf("Response cmd: %02x, val: %04x\r\n", cmd, value);
 
   switch (cmd) {
-    case DFPLAYER_RETURN_CODE_DONE:
-      dfpDone = 1;
+    case PLAYER_RETURN_CODE_DONE:
+      pDone = 1;
       printf("Done\r\n");
       break;
   
-    case DFPLAYER_RETURN_CODE_READY:
-      dfpSource = value;
-      dfpReady = 1;
+    case PLAYER_RETURN_CODE_READY:
+      pSource = value;
+      pReady = 1;
       printf("Ready\r\n");
       break;
 
-    case DFPLAYER_RETURN_ERROR:
-      dfpError = value;
+    case PLAYER_RETURN_ERROR:
+      pError = value;
       printf("Error: %04x\r\n", value);
       break;
     
-    case DFPLAYER_RETURN_CODE_OK_ACK:
-      dfpOk = 1;
+    case PLAYER_RETURN_CODE_OK_ACK:
+      pOk = 1;
       printf("Ok\r\n");
       break;
   }

@@ -62,11 +62,11 @@ enum _setup {
   setup_contrast
 };
 
-void displayInit();
-void displaySend(uint8_t command, uint8_t *data, uint8_t size);
-void displaySetCursor(uint8_t x, uint8_t y);
-void displaySendData(uint8_t page,uint8_t *data, uint8_t size);
-void displaySetContrast(uint8_t value);
+void display_init();
+void display_send(uint8_t command, uint8_t *data, uint8_t size);
+void display_setCursor(uint8_t x, uint8_t y);
+void display_sendData(uint8_t page,uint8_t *data, uint8_t size);
+void display_setContrast(uint8_t value);
 
 #ifdef __cplusplus
 }

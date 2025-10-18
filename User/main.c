@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "dfplayer.h"
+#include "player.h"
 #include "display.h"
 #include "fonts.h"
 
@@ -12,13 +12,13 @@
 #define VOLUME_MAX  30
 
 /* Global Variable */
-extern uint8_t rxBuffer[DFPLAYER_UART_FRAME_SIZE];
+extern uint8_t rxBuffer[PLAYER_UART_FRAME_SIZE];
 extern uint8_t rxPos;
-extern uint8_t dfpReady;
-extern uint8_t dfpDone;
-extern uint8_t dfpOk;
-extern uint8_t dfpSource;
-extern uint16_t dfpError;
+extern uint8_t pReady;
+extern uint8_t pDone;
+extern uint8_t pOk;
+extern uint8_t pSource;
+extern uint16_t pError;
 
 extern const uint8_t font8x8[][8];
 
@@ -109,13 +109,13 @@ void USART1_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void USART1_IRQHandler(void) {
   if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
     rxBuffer[rxPos] = USART_ReceiveData(USART1);
-    if (rxPos == 0 && rxBuffer[rxPos] != DFPLAYER_UART_START_BYTE) {
+    if (rxPos == 0 && rxBuffer[rxPos] != PLAYER_UART_START_BYTE) {
       return;
     }
     rxPos++;
 
-    if (rxPos == DFPLAYER_UART_FRAME_SIZE) {
-      dfplayer_return();
+    if (rxPos == PLAYER_UART_FRAME_SIZE) {
+      player_return();
       rxPos = 0;
     }
   }
@@ -130,24 +130,23 @@ void displayShow() {
 
   sprintf(buff, "Folder: %2d     ", folder);
   text(buff, line);
-  displaySendData(0, line, sizeof(line));
+  display_sendData(0, line, sizeof(line));
 
   sprintf(buff, "Track: %3d      ", track);
   text(buff, line);
-  displaySendData(1, line, sizeof(line));
+  display_sendData(1, line, sizeof(line));
 
-  sprintf(buff, "S: %1d E: %6d ", dfpSource, dfpError);
+  sprintf(buff, "S: %1d E: %6d ", pSource, pError);
   text(buff, line);
-  displaySendData(2, line, sizeof(line));
+  display_sendData(2, line, sizeof(line));
 
-  sprintf(buff, "R: %1d D: %1d O: %1d ", dfpReady, dfpDone, dfpOk);
+  sprintf(buff, "R: %1d D: %1d O: %1d ", pReady, pDone, pOk);
   text(buff, line);
-  displaySendData(3, line, sizeof(line));
+  display_sendData(3, line, sizeof(line));
 }
 
 /**
  * @brief Main function
- *
  */
 int main(void) {
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
@@ -164,20 +163,20 @@ int main(void) {
   initUSART1();
   initI2C1();
   
-  displayInit();
-  dfplayer_reset();
-  //Delay_Ms(DFPLAYER_BOOT_DELAY);
-  while (dfpReady == 0) {
+  display_init();
+  player_reset();
+  //Delay_Ms(PLAYER_BOOT_DELAY);
+  while (pReady == 0) {
     Delay_Ms(100);
   }
   
-  printf("Set volume\r\n");
-  dfplayer_setVolume(volume);
-  Delay_Ms(DFPLAYER_CMD_DELAY);
+  player_setVolume(volume);
+  Delay_Ms(PLAYER_CMD_DELAY);
 
-  dfplayer_repeatFolder(folder);
+  player_repeatFolder(folder);
+  Delay_Ms(PLAYER_CMD_DELAY);
   
-  //dfplayer_repeatAll(1);
+  //player_repeatAll(1);
 
   while (1) {
     displayShow();

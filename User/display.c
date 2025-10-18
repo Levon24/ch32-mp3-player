@@ -4,11 +4,8 @@
 
 /**
  * Send data to display
- * 
- * @param data 
- * @param size 
  */
-void displaySend(uint8_t command, uint8_t *data, uint8_t size) {
+void display_send(uint8_t command, uint8_t *data, uint8_t size) {
   while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET) {
     //printf("I2C_FLAG_BUSY\r\n");
   }
@@ -42,17 +39,15 @@ void displaySend(uint8_t command, uint8_t *data, uint8_t size) {
 
 /**
  * Send byte to display
- * 
- * @param byte 
  */
-void displaySendCommand(uint8_t command) {
-  displaySend(0, &command, 1);
+void display_sendCommand(uint8_t command) {
+  display_send(0, &command, 1);
 }
 
 /**
  * Initialization
  */
-void displayInit() {
+void display_init() {
   // Set MUX Ratio A8h, 3Fh
   // Set Display Offset D3h, 00h
   // Set Display Start Line 40h
@@ -68,78 +63,87 @@ void displayInit() {
 
   Delay_Ms(100);
 
-  displaySendCommand(SSD1306_DISPLAY_OFF);
+  display_sendCommand(SSD1306_DISPLAY_OFF);
 
-	displaySendCommand(SSD1306_SET_DISPLAY_CLOCK_DIV);
-  displaySendCommand(0x00);
+	display_sendCommand(SSD1306_SET_DISPLAY_CLOCK_DIV);
+  display_sendCommand(0x00);
   
-  displaySendCommand(SSD1306_SET_MULTIPLEX);
-  displaySendCommand(SSD1306_MULTIPLEX_128_32);
+  display_sendCommand(SSD1306_SET_MULTIPLEX);
+  display_sendCommand(SSD1306_MULTIPLEX_128_32);
 
-  displaySendCommand(SSD1306_SET_DISPLAY_OFFSET);
-  displaySendCommand(0x00);
+  display_sendCommand(SSD1306_SET_DISPLAY_OFFSET);
+  display_sendCommand(0x00);
 
-  displaySendCommand(SSD1306_SET_START_LINE | 0x00);
+  display_sendCommand(SSD1306_SET_START_LINE | 0x00);
 
-  displaySendCommand(SSD1306_CHARGE_PUMP);
-  displaySendCommand(0x14); // Enable Charge Pump
+  display_sendCommand(SSD1306_CHARGE_PUMP);
+  display_sendCommand(0x14); // Enable Charge Pump
 
-  displaySendCommand(SSD1306_MEMORY_MODE);
-  displaySendCommand(0x00); // Horizontal addressing mode (A[1:0]=00b)
+  display_sendCommand(SSD1306_MEMORY_MODE);
+  display_sendCommand(0x00); // Horizontal addressing mode (A[1:0]=00b)
   
-  displaySendCommand(SSD1306_SEG_REMAP_YES);
+  display_sendCommand(SSD1306_SEG_REMAP_YES);
 	
-  displaySendCommand(SSD1306_COM_SCAN_DEC); // Flip?
+  display_sendCommand(SSD1306_COM_SCAN_DEC); // Flip?
 
-	displaySendCommand(SSD1306_SET_COM_PINS);
-  displaySendCommand(0x02); //for 128x32 0x02, for 128x64 0x12;
+	display_sendCommand(SSD1306_SET_COM_PINS);
+  display_sendCommand(0x02); //for 128x32 0x02, for 128x64 0x12;
 
-  displaySendCommand(SSD1306_DEACTIVATE_SCROLL);
+  display_sendCommand(SSD1306_DEACTIVATE_SCROLL);
 
-  displaySendCommand(SSD1306_COLUMN_ADDR);
-  displaySendCommand(0x00);
-  displaySendCommand(0xFF);
+  display_sendCommand(SSD1306_COLUMN_ADDR);
+  display_sendCommand(0x00);
+  display_sendCommand(0xFF);
 
-  displaySendCommand(SSD1306_PAGE_ADDR);
-  displaySendCommand(0x00);
-  displaySendCommand(0x07);
+  display_sendCommand(SSD1306_PAGE_ADDR);
+  display_sendCommand(0x00);
+  display_sendCommand(0x07);
 
-	displaySendCommand(SSD1306_SET_CONTRAST);
-	displaySendCommand(DISPLAY_DEFAULT_CONTRAST);
+	display_sendCommand(SSD1306_SET_CONTRAST);
+	display_sendCommand(DISPLAY_DEFAULT_CONTRAST);
 
-	//displaySendCommand(SSD1306_SET_PRE_CHARGE);
-	//displaySendCommand(0xF1);
+	//display_sendCommand(SSD1306_SET_PRE_CHARGE);
+	//display_sendCommand(0xF1);
 
-	displaySendCommand(SSD1306_SET_V_COM_DETECT);
-	displaySendCommand(0x40);
+	display_sendCommand(SSD1306_SET_V_COM_DETECT);
+	display_sendCommand(0x40);
 
-	displaySendCommand(SSD1306_DISPLAY_ALLON_RESUME);
+	display_sendCommand(SSD1306_DISPLAY_ALLON_RESUME);
 
-	displaySendCommand(SSD1306_DISPLAY_ON);
+	display_sendCommand(SSD1306_DISPLAY_ON);
 }
 
-void displaySetCursor(uint8_t x, uint8_t y) {
+/**
+ * @brief Set Cursor
+ */
+void display_setCursor(uint8_t x, uint8_t y) {
 	// Y - 1 unit = 1 page (8 pixel rows)
 	// X - 1 unit = 8 pixel columns
 
-	displaySendCommand(0x00 | (8 * x & 0x0F)); 		      // Set column lower address
-	displaySendCommand(0x10 | ((8 * x >> 4) & 0x0F));   // Set column higher address
-	displaySendCommand(0xB0 | y);                       // Set page address
+	display_sendCommand(0x00 | (8 * x & 0x0F)); 		      // Set column lower address
+	display_sendCommand(0x10 | ((8 * x >> 4) & 0x0F));   // Set column higher address
+	display_sendCommand(0xB0 | y);                       // Set page address
 }
 
-void displaySendData(uint8_t page, uint8_t *data, uint8_t size) {
-	//displaySendCommand(SSD1306_PAGE_ADDR);
-	//displaySendCommand(0x00);
-	//displaySendCommand(0x07);
+/**
+ * @brief Send data to display
+ */
+void display_sendData(uint8_t page, uint8_t *data, uint8_t size) {
+	//display_sendCommand(SSD1306_PAGE_ADDR);
+	//display_sendCommand(0x00);
+	//display_sendCommand(0x07);
 
-	displaySendCommand(SSD1306_SET_PAGE_START_ADDRESS | page);
-	displaySendCommand(SSD1306_SET_HIGHER_COLUMN_START_ADDRESS);
-	displaySendCommand(SSD1306_SET_LOWER_COLUMN_START_ADDRESS);
+	display_sendCommand(SSD1306_SET_PAGE_START_ADDRESS | page);
+	display_sendCommand(SSD1306_SET_HIGHER_COLUMN_START_ADDRESS);
+	display_sendCommand(SSD1306_SET_LOWER_COLUMN_START_ADDRESS);
 
-	displaySend(SSD1306_SET_START_LINE, data, size);
+	display_send(SSD1306_SET_START_LINE, data, size);
 }
 
-void displaySetContrast(uint8_t value) {
-	displaySendCommand(SSD1306_SET_CONTRAST);
-	displaySendCommand(value);
+/**
+ * @brief Set Contrast, but it look's like does not work
+ */
+void display_setContrast(uint8_t value) {
+	display_sendCommand(SSD1306_SET_CONTRAST);
+	display_sendCommand(value);
 }
