@@ -20,11 +20,14 @@ extern uint8_t pOk;
 extern uint8_t pSource;
 extern uint16_t pError;
 
+extern uint8_t pFolder;
+extern uint8_t pFolders;
+extern uint16_t pTrack;
+extern uint16_t pVolume;
+extern uint16_t pTotalTrack;
+
 extern const uint8_t font8x8[][8];
 
-uint8_t folder = 2;
-uint16_t track = 1;
-uint16_t volume = 15;
 
 /**
  * @brief Setup USART1
@@ -128,19 +131,19 @@ void displayShow() {
   char buff[17];
   uint8_t line[128];
 
-  sprintf(buff, "Folder: %2d     ", folder);
+  sprintf(buff, "Folder: %2d / %3d", pFolder, pFolders);
   text(buff, line);
   display_sendData(0, line, sizeof(line));
 
-  sprintf(buff, "Track: %3d      ", track);
+  sprintf(buff, "Track: %3d / %3d", pTrack, pTotalTrack);
   text(buff, line);
   display_sendData(1, line, sizeof(line));
 
-  sprintf(buff, "S: %1d E: %6d ", pSource, pError);
+  sprintf(buff, "S: %2d, E: %6d", pSource, pError);
   text(buff, line);
   display_sendData(2, line, sizeof(line));
 
-  sprintf(buff, "R: %1d D: %1d O: %1d ", pReady, pDone, pOk);
+  sprintf(buff, "R: %1d, D: %1d, O: %1d", pReady, pDone, pOk);
   text(buff, line);
   display_sendData(3, line, sizeof(line));
 }
@@ -170,10 +173,10 @@ int main(void) {
     Delay_Ms(100);
   }
   
-  player_setVolume(volume);
+  player_setVolume(15);
   Delay_Ms(PLAYER_CMD_DELAY);
 
-  player_repeatFolder(folder);
+  player_repeatFolder(2);
   Delay_Ms(PLAYER_CMD_DELAY);
   
   //player_repeatAll(1);

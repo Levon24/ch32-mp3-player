@@ -79,8 +79,8 @@ enum player_module {
 
 /* Callback */
 enum player_callback {
-  PLAYER_CALLBACK_UNDIFINED,
-  PLAYER_CALLBACK_FILE,
+  PLAYER_CALLBACK_UNDEFINED,
+  PLAYER_CALLBACK_TRACK,
 };
 
 /* Commands */

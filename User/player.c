@@ -6,7 +6,7 @@
 
 const enum player_module pModule = PLAYER_MINI; 
 const uint8_t pAck = 0x01; // 0x01 = module return feedback after the command, 0x00 = module not return feedback after the command
-//enum player_callback pCallback = PLAYER_CALLBACK_UNDIFINED;
+enum player_callback pCallback = PLAYER_CALLBACK_UNDEFINED;
 
 uint8_t txBuffer[PLAYER_UART_FRAME_SIZE];
 uint8_t rxBuffer[PLAYER_UART_FRAME_SIZE];
@@ -16,6 +16,12 @@ uint8_t pDone = 0;
 uint8_t pOk = 0;
 uint8_t pSource = 0;
 uint16_t pError = 0;
+
+uint8_t pFolder = 2;
+uint8_t pFolders = 0;
+uint16_t pTrack = 1;
+uint16_t pVolume = 15;
+uint16_t pTotalTrack = 0;
 
 /**
  * @brief Write buffer to USART1
@@ -176,6 +182,7 @@ void player_volumeDown() {
  */
 void player_setVolume(uint8_t volume) {
   player_send(PLAYER_SET_VOLUME, 0, volume);
+  pVolume = volume;
 }
 
 /**
@@ -371,6 +378,8 @@ void player_stop() {
  */
 void player_repeatFolder(uint8_t folder) {
   player_send(PLAYER_REPEAT_FOLDER, 0, folder);
+  pFolder = folder;
+  pCallback = PLAYER_CALLBACK_TRACK;
 }
 
 /**
@@ -413,24 +422,31 @@ void player_return() {
 
   switch (cmd) {
     case PLAYER_RETURN_CODE_DONE:
-      pDone = 1;
       printf("Done\r\n");
+      pDone = 1;
+      switch (pCallback) {
+        case PLAYER_CALLBACK_TRACK:
+          pTotalTrack = value;
+          break;
+        case PLAYER_CALLBACK_UNDEFINED:
+          break;
+      }
       break;
   
     case PLAYER_RETURN_CODE_READY:
+      printf("Ready\r\n");
       pSource = value;
       pReady = 1;
-      printf("Ready\r\n");
       break;
 
     case PLAYER_RETURN_ERROR:
-      pError = value;
       printf("Error: %04x\r\n", value);
+      pError = value;
       break;
     
     case PLAYER_RETURN_CODE_OK_ACK:
-      pOk = 1;
       printf("Ok\r\n");
+      pOk = 1;
       break;
   }
 }
